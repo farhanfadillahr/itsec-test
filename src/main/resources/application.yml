@@ -73,8 +73,8 @@ app:
     duration: 30m
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
-    default-limit: 100
-    default-window: 1m
+    default-limit: ${RATE_LIMIT_DEFAULT_LIMIT:10}
+    default-window: ${RATE_LIMIT_DEFAULT_WINDOW:1m}
     rules:
       - pattern: /api/v1/auth/login
         methods: [POST]

@@ -110,6 +110,8 @@ All settings come from environment variables. See [.env.example](.env.example).
 | `MAIL_DELIVERY_ENABLED` | `true` | `false` writes the OTP to the log instead of sending it |
 | `MFA_ENABLED` | `true` | Turns MFA on or off for all users |
 | `RATE_LIMIT_ENABLED` | `true` | Turns rate limiting on or off |
+| `RATE_LIMIT_DEFAULT_LIMIT` | `10` | Requests allowed per window for endpoints without their own rule |
+| `RATE_LIMIT_DEFAULT_WINDOW` | `1m` | Window for the default limit, for example `30s`, `1m` or `1h` |
 
 ## Known limitations
 
