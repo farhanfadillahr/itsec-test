@@ -11,8 +11,8 @@ public record ArticleVisibility(boolean allStatuses, UUID ownerId) {
             return new ArticleVisibility(false, null);
         }
         return switch (principal.role()) {
-            case SUPER_ADMIN -> new ArticleVisibility(true, null);
-            case EDITOR, CONTRIBUTOR -> new ArticleVisibility(false, principal.userId());
+            case SUPER_ADMIN, EDITOR -> new ArticleVisibility(true, null);
+            case CONTRIBUTOR -> new ArticleVisibility(false, principal.userId());
             case VIEWER -> new ArticleVisibility(false, null);
         };
     }

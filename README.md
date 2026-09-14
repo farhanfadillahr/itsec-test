@@ -73,7 +73,7 @@ Endpoints under `/api/v1/auth`: register, login, verify OTP, resend OTP, refresh
 | Role | Create | Read | Update | Delete | Manage users | Audit logs |
 | --- | --- | --- | --- | --- | --- | --- |
 | SUPER_ADMIN | yes | all | all | all | yes | yes |
-| EDITOR | yes | published and own | own | own | no | no |
+| EDITOR | yes | all | own | own | no | no |
 | CONTRIBUTOR | yes | published and own | own | no | no | no |
 | VIEWER (default) | no | published | no | no | no | no |
 

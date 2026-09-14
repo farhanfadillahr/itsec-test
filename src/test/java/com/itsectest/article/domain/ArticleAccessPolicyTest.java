@@ -54,23 +54,12 @@ class ArticleAccessPolicyTest {
     class Reading {
 
         @Test
-        void superAdminSeesDraftsTheyDoNotOwn() {
-            assertThat(policy.canView(article(SOMEONE_ELSE, ArticleStatus.DRAFT),
-                    principal(Role.SUPER_ADMIN, OWNER))).isTrue();
-        }
-
-        @Test
-        void editorSeesOwnWorkAndPublishedWorkOfOthers() {
-            AuthPrincipal editor = principal(Role.EDITOR, OWNER);
-            assertThat(policy.canView(article(OWNER, ArticleStatus.DRAFT), editor)).isTrue();
-            assertThat(policy.canView(article(SOMEONE_ELSE, ArticleStatus.PUBLISHED), editor)).isTrue();
-        }
-
-        @Test
-        void editorDoesNotSeeUnpublishedWorkOfOthers() {
-            AuthPrincipal editor = principal(Role.EDITOR, OWNER);
-            assertThat(policy.canView(article(SOMEONE_ELSE, ArticleStatus.DRAFT), editor)).isFalse();
-            assertThat(policy.canView(article(SOMEONE_ELSE, ArticleStatus.ARCHIVED), editor)).isFalse();
+        void superAdminAndEditorSeeDraftsTheyDoNotOwn() {
+            Article draft = article(SOMEONE_ELSE, ArticleStatus.DRAFT);
+            assertThat(policy.canView(draft, principal(Role.SUPER_ADMIN, OWNER))).isTrue();
+            assertThat(policy.canView(draft, principal(Role.EDITOR, OWNER))).isTrue();
+            assertThat(policy.canView(article(SOMEONE_ELSE, ArticleStatus.ARCHIVED),
+                    principal(Role.EDITOR, OWNER))).isTrue();
         }
 
         @Test
@@ -197,15 +186,9 @@ class ArticleAccessPolicyTest {
     class Visibility {
 
         @Test
-        void superAdminSeesEveryStatus() {
+        void superAdminAndEditorSeeEveryStatus() {
             assertThat(ArticleVisibility.forCaller(principal(Role.SUPER_ADMIN, OWNER)).allStatuses()).isTrue();
-        }
-
-        @Test
-        void editorGetsPublishedPlusOwn() {
-            ArticleVisibility visibility = ArticleVisibility.forCaller(principal(Role.EDITOR, OWNER));
-            assertThat(visibility.allStatuses()).isFalse();
-            assertThat(visibility.ownerId()).isEqualTo(OWNER);
+            assertThat(ArticleVisibility.forCaller(principal(Role.EDITOR, OWNER)).allStatuses()).isTrue();
         }
 
         @Test

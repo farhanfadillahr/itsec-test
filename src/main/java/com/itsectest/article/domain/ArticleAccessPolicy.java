@@ -22,8 +22,8 @@ public class ArticleAccessPolicy {
             return article.isPublic();
         }
         return switch (principal.role()) {
-            case SUPER_ADMIN -> true;
-            case EDITOR, CONTRIBUTOR -> article.isPublic() || article.isOwnedBy(principal.userId());
+            case SUPER_ADMIN, EDITOR -> true;
+            case CONTRIBUTOR -> article.isPublic() || article.isOwnedBy(principal.userId());
             case VIEWER -> article.isPublic();
         };
     }
