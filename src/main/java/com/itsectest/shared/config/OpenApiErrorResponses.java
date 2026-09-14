@@ -30,8 +30,9 @@ public class OpenApiErrorResponses {
             Content content = new Content().addMediaType("application/json",
                     new MediaType().schema(new Schema<>().$ref("#/components/schemas/ApiError")));
 
-            openApi.getPaths().values().stream()
-                    .flatMap(path -> path.readOperations().stream())
+            openApi.getPaths().entrySet().stream()
+                    .filter(entry -> !entry.getKey().startsWith(OpenApiConfig.ACTUATOR_PREFIX))
+                    .flatMap(entry -> entry.getValue().readOperations().stream())
                     .forEach(operation -> addMissing(operation, content));
         };
     }

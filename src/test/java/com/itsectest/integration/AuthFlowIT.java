@@ -179,4 +179,13 @@ class AuthFlowIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.info.title").value("ITSEC Test API"));
     }
+
+    @Test
+    void healthEndpointIsDocumentedAsPublic() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/actuator/health'].get").exists())
+                .andExpect(jsonPath("$.paths['/actuator/health'].get.security").isEmpty())
+                .andExpect(jsonPath("$.paths['/actuator/health'].get.responses['401']").doesNotExist());
+    }
 }

@@ -2,6 +2,7 @@ package com.itsectest.shared.config;
 
 import java.util.List;
 
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.models.servers.Server;
 public class OpenApiConfig {
 
     public static final String BEARER_SCHEME = "bearerAuth";
+    public static final String ACTUATOR_PREFIX = "/actuator";
 
     @Bean
     public OpenAPI itsecTestOpenApi() {
@@ -46,5 +48,19 @@ public class OpenApiConfig {
                         .bearerFormat("JWT")
                         .description("Access token returned by the login or MFA-verify endpoint")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME));
+    }
+
+    @Bean
+    public OpenApiCustomizer publicActuatorEndpoints() {
+        return openApi -> {
+            if (openApi.getPaths() == null) {
+                return;
+            }
+            openApi.getPaths().forEach((path, item) -> {
+                if (path.startsWith(ACTUATOR_PREFIX)) {
+                    item.readOperations().forEach(operation -> operation.setSecurity(List.of()));
+                }
+            });
+        };
     }
 }

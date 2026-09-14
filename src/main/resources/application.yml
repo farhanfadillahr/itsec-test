@@ -99,6 +99,7 @@ app:
     delivery-enabled: ${MAIL_DELIVERY_ENABLED:true}
 
 springdoc:
+  show-actuator: true
   api-docs:
     path: /v3/api-docs
   swagger-ui:
