@@ -121,6 +121,10 @@ All settings come from environment variables. See [.env.example](.env.example).
 - Only single articles are cached, not article lists.
 - CORS allows all origins.
 
+## DSA (Python)
+
+The Python solutions for the DSA challenges are in [dsa/](dsa/). Run them with `python3 dsa/challenges.py`.
+
 ## Project structure
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
