@@ -195,6 +195,11 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*IT.java</include>
+					</includes>
 					<excludedGroups>${excluded.test.groups}</excludedGroups>
 				</configuration>
 			</plugin>
@@ -246,7 +251,6 @@
 
 	<profiles>
 		<profile>
-			<!-- used inside the Docker image build, where no Docker daemon is reachable -->
 			<id>unit-only</id>
 			<properties><excluded.test.groups>integration</excluded.test.groups></properties>
 		</profile>
