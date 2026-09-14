@@ -102,7 +102,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a user",
-            description = "Refuses to delete the caller's own account or the last remaining super admin.")
+            description = "Soft delete. Refuses to delete the caller's own account or the last remaining super admin.")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         users.delete(id, currentUser.require().userId());
         return ApiResponse.message("User deleted");

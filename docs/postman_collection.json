@@ -656,7 +656,7 @@
                 "{{userId}}"
               ]
             },
-            "description": "You cannot delete your own account or the last super admin."
+            "description": "Soft delete. You cannot delete your own account or the last super admin."
           }
         }
       ]

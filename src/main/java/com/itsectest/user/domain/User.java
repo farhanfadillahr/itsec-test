@@ -71,6 +71,9 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public boolean isLocked() {
         return lockedUntil != null && lockedUntil.isAfter(Instant.now());
     }

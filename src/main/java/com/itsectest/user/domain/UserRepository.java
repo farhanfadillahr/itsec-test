@@ -26,7 +26,5 @@ public interface UserRepository {
 
     Page<User> search(UserSearchCriteria criteria, Pageable pageable);
 
-    void delete(User user);
-
     long countByRole(com.itsectest.shared.security.Role role);
 }

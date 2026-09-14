@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,7 @@ import com.itsectest.shared.security.Role;
 import com.itsectest.user.api.RegisterUserCommand;
 import com.itsectest.user.api.UserAccount;
 import com.itsectest.user.api.UserFacade;
+import com.itsectest.user.api.UserUnlocked;
 import com.itsectest.user.domain.User;
 import com.itsectest.user.domain.UserRepository;
 import com.itsectest.user.domain.UserSearchCriteria;
@@ -36,6 +38,7 @@ public class UserService implements UserFacade {
 
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher events;
 
     @Override
     @Auditable(action = AuditAction.REGISTER, resourceType = "USER", resourceId = "#result.id()")
@@ -147,6 +150,7 @@ public class UserService implements UserFacade {
     @Auditable(action = AuditAction.USER_UPDATED, resourceType = "USER", resourceId = "#id")
     public UserAccount update(UUID id, UpdateUserCommand command) {
         User user = require(id);
+        boolean wasLocked = user.getStatus() == UserStatus.LOCKED || user.getLockedUntil() != null;
 
         String email = command.email().trim().toLowerCase();
         if (!email.equalsIgnoreCase(user.getEmail()) && users.existsByEmail(email)) {
@@ -167,7 +171,12 @@ public class UserService implements UserFacade {
         if (command.status() != UserStatus.LOCKED) {
             user.setLockedUntil(null);
         }
-        return toAccount(users.save(user));
+        User saved = users.save(user);
+
+        if (wasLocked && command.status() != UserStatus.LOCKED) {
+            events.publishEvent(new UserUnlocked(id));
+        }
+        return toAccount(saved);
     }
 
     @Auditable(action = AuditAction.USER_DELETED, resourceType = "USER", resourceId = "#id")
@@ -179,7 +188,8 @@ public class UserService implements UserFacade {
         if (user.getRole() == Role.SUPER_ADMIN) {
             requireAnotherSuperAdminExists();
         }
-        users.delete(user);
+        user.setDeletedAt(Instant.now());
+        users.save(user);
     }
 
     private User require(UUID id) {

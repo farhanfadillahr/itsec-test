@@ -18,6 +18,7 @@ final class UserSpecifications {
     static Specification<User> matching(UserSearchCriteria criteria) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.isNull(root.get("deletedAt")));
 
             if (criteria.keyword() != null && !criteria.keyword().isBlank()) {
                 String pattern = "%" + criteria.keyword().toLowerCase() + "%";

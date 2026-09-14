@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +32,7 @@ import com.itsectest.shared.error.NotFoundException;
 import com.itsectest.shared.security.Role;
 import com.itsectest.user.api.RegisterUserCommand;
 import com.itsectest.user.api.UserAccount;
+import com.itsectest.user.api.UserUnlocked;
 import com.itsectest.user.domain.User;
 import com.itsectest.user.domain.UserRepository;
 import com.itsectest.user.domain.UserSearchCriteria;
@@ -44,6 +46,7 @@ class UserServiceTest {
 
     @Mock private UserRepository users;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private ApplicationEventPublisher events;
 
     private UserService service;
 
@@ -56,7 +59,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserService(users, passwordEncoder);
+        service = new UserService(users, passwordEncoder, events);
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$12$hash");
         when(users.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -290,13 +293,49 @@ class UserServiceTest {
     }
 
     @Test
-    void deletesAnAccount() {
+    void releasesTheLoginLockWhenALockedAccountIsReactivated() {
+        User account = user(Role.VIEWER, UserStatus.LOCKED);
+        account.setLockedUntil(Instant.now().plusSeconds(600));
+        when(users.findById(USER_ID)).thenReturn(Optional.of(account));
+
+        service.update(USER_ID, new UpdateUserCommand(
+                "Name", "farhan@example.com", Role.VIEWER, UserStatus.ACTIVE, true, null));
+
+        verify(events).publishEvent(new UserUnlocked(USER_ID));
+    }
+
+    @Test
+    void keepsTheLoginLockWhenTheStatusStaysLocked() {
+        User account = user(Role.VIEWER, UserStatus.LOCKED);
+        account.setLockedUntil(Instant.now().plusSeconds(600));
+        when(users.findById(USER_ID)).thenReturn(Optional.of(account));
+
+        service.update(USER_ID, new UpdateUserCommand(
+                "Name", "farhan@example.com", Role.VIEWER, UserStatus.LOCKED, true, null));
+
+        assertThat(account.getLockedUntil()).isNotNull();
+        verify(events, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void publishesNothingWhenTheAccountWasNotLocked() {
+        when(users.findById(USER_ID)).thenReturn(Optional.of(user(Role.VIEWER, UserStatus.ACTIVE)));
+
+        service.update(USER_ID, new UpdateUserCommand(
+                "Name", "farhan@example.com", Role.VIEWER, UserStatus.ACTIVE, true, null));
+
+        verify(events, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void softDeletesAnAccountSoItsArticlesKeepTheirAuthor() {
         User account = user(Role.EDITOR, UserStatus.ACTIVE);
         when(users.findById(USER_ID)).thenReturn(Optional.of(account));
 
         service.delete(USER_ID, UUID.randomUUID());
 
-        verify(users).delete(account);
+        assertThat(account.getDeletedAt()).isNotNull();
+        verify(users).save(account);
     }
 
     @Test

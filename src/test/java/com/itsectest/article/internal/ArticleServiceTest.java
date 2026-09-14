@@ -132,7 +132,7 @@ class ArticleServiceTest {
     }
 
     @Test
-    void letsAnEditorSeeEverythingInTheListing() {
+    void scopesAnEditorsListingToPublishedPlusOwn() {
         callerIs(Role.EDITOR, OWNER);
         when(articles.search(any(), any(), any())).thenReturn(new PageImpl<>(List.of()));
 
@@ -140,7 +140,16 @@ class ArticleServiceTest {
 
         ArgumentCaptor<ArticleVisibility> visibility = ArgumentCaptor.captor();
         verify(articles).search(any(), visibility.capture(), any());
-        assertThat(visibility.getValue().allStatuses()).isTrue();
+        assertThat(visibility.getValue().allStatuses()).isFalse();
+        assertThat(visibility.getValue().ownerId()).isEqualTo(OWNER);
+    }
+
+    @Test
+    void hidesSomeoneElsesDraftFromAnEditor() {
+        callerIs(Role.EDITOR, OWNER);
+        when(articles.findById(ARTICLE_ID)).thenReturn(Optional.of(article(SOMEONE_ELSE, ArticleStatus.DRAFT)));
+
+        assertThatThrownBy(() -> service.get(ARTICLE_ID)).isInstanceOf(NotFoundException.class);
     }
 
     @Test

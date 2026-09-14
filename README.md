@@ -64,7 +64,7 @@ Endpoints under `/api/v1/auth`: register, login, verify OTP, resend OTP, refresh
 
 **MFA.** After the password is checked, a 6 digit code is sent to the user's email. Tokens are only returned after the code is verified. The code is stored as a hash, expires after 5 minutes and allows 3 wrong attempts.
 
-**Account lockout.** 5 failed logins within 10 minutes locks the account for 30 minutes. The lock is stored in Redis and also saved to `users.locked_until`.
+**Account lockout.** 5 failed logins within 10 minutes locks the account for 30 minutes. The lock is stored in Redis and also saved to `users.locked_until`. A super admin can unlock the account earlier by setting its status to `ACTIVE`.
 
 **Audit log.** `GET /api/v1/audit-logs` (super admin only) lists events for article and user CRUD, registration, login attempts, OTP, lockout, token refresh, logout, rate limiting and denied access. Each entry has the user, action, endpoint, IP address, browser, OS, device type and timestamp, and can be filtered by user, action, status, resource and date range.
 
@@ -73,11 +73,13 @@ Endpoints under `/api/v1/auth`: register, login, verify OTP, resend OTP, refresh
 | Role | Create | Read | Update | Delete | Manage users | Audit logs |
 | --- | --- | --- | --- | --- | --- | --- |
 | SUPER_ADMIN | yes | all | all | all | yes | yes |
-| EDITOR | yes | all | own | own | no | no |
+| EDITOR | yes | published and own | own | own | no | no |
 | CONTRIBUTOR | yes | published and own | own | no | no | no |
 | VIEWER (default) | no | published | no | no | no | no |
 
-A viewer who requests a draft gets 404 instead of 403, so they cannot tell whether the draft exists.
+A user who requests a draft they are not allowed to see gets 404 instead of 403, so they cannot tell whether the draft exists.
+
+Deleting a user is a soft delete, so the articles they wrote keep their author. The username and email can be registered again afterwards.
 
 ### Other
 

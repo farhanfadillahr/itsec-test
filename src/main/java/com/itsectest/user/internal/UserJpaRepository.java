@@ -11,13 +11,15 @@ import com.itsectest.user.domain.User;
 
 interface UserJpaRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
 
-    Optional<User> findByUsernameIgnoreCase(String username);
+    Optional<User> findByIdAndDeletedAtIsNull(UUID id);
 
-    Optional<User> findByEmailIgnoreCase(String email);
+    Optional<User> findByUsernameIgnoreCaseAndDeletedAtIsNull(String username);
 
-    boolean existsByUsernameIgnoreCase(String username);
+    Optional<User> findByEmailIgnoreCaseAndDeletedAtIsNull(String email);
 
-    boolean existsByEmailIgnoreCase(String email);
+    boolean existsByUsernameIgnoreCaseAndDeletedAtIsNull(String username);
 
-    long countByRole(Role role);
+    boolean existsByEmailIgnoreCaseAndDeletedAtIsNull(String email);
+
+    long countByRoleAndDeletedAtIsNull(Role role);
 }

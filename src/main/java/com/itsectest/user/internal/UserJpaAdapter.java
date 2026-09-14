@@ -29,29 +29,30 @@ class UserJpaAdapter implements UserRepository {
 
     @Override
     public Optional<User> findById(UUID id) {
-        return jpa.findById(id);
+        return jpa.findByIdAndDeletedAtIsNull(id);
     }
 
     @Override
     public Optional<User> findByUsername(String username) {
-        return jpa.findByUsernameIgnoreCase(username);
+        return jpa.findByUsernameIgnoreCaseAndDeletedAtIsNull(username);
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return jpa.findByEmailIgnoreCase(email);
+        return jpa.findByEmailIgnoreCaseAndDeletedAtIsNull(email);
     }
 
     @Override
     public boolean existsByUsername(String username) {
-        return jpa.existsByUsernameIgnoreCase(username);
+        return jpa.existsByUsernameIgnoreCaseAndDeletedAtIsNull(username);
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return jpa.existsByEmailIgnoreCase(email);
+        return jpa.existsByEmailIgnoreCaseAndDeletedAtIsNull(email);
     }
 
+    // deleted users are included so their articles still show the author's username
     @Override
     public List<User> findAllById(Collection<UUID> ids) {
         return jpa.findAllById(ids);
@@ -63,12 +64,7 @@ class UserJpaAdapter implements UserRepository {
     }
 
     @Override
-    public void delete(User user) {
-        jpa.delete(user);
-    }
-
-    @Override
     public long countByRole(Role role) {
-        return jpa.countByRole(role);
+        return jpa.countByRoleAndDeletedAtIsNull(role);
     }
 }
