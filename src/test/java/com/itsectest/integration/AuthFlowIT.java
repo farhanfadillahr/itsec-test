@@ -186,6 +186,7 @@ class AuthFlowIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/actuator/health'].get").exists())
                 .andExpect(jsonPath("$.paths['/actuator/health'].get.security").isEmpty())
-                .andExpect(jsonPath("$.paths['/actuator/health'].get.responses['401']").doesNotExist());
+                .andExpect(jsonPath("$.paths['/actuator/health'].get.responses['401']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/actuator']").doesNotExist());
     }
 }
