@@ -4,6 +4,16 @@ REST API for managing articles with JWT authentication, email OTP, role based ac
 
 Built with Java 21, Spring Boot 4.1, Spring Security 7, PostgreSQL 16 and Redis 7.
 
+## Live demo
+
+| | |
+| --- | --- |
+| Swagger UI | https://api-itsec.farhanf.xyz/swagger-ui/index.html |
+| OpenAPI spec | https://api-itsec.farhanf.xyz/v3/api-docs |
+| Health check | https://api-itsec.farhanf.xyz/actuator/health |
+
+The live demo does not use the default super admin password from the local setup below. Credentials for it are shared separately. To use the Postman collection against it, set `baseUrl` to `https://api-itsec.farhanf.xyz/api/v1`.
+
 ## Getting started
 
 ```bash
@@ -20,19 +30,19 @@ This starts the API on port 8080, PostgreSQL on 5432 and Redis on 6379. Flyway c
 | Health check | http://localhost:8080/actuator/health |
 | Postman collection | [docs/postman_collection.json](docs/postman_collection.json) |
 
-Default super admin: `superadmin` / `SuperAdmin#2026`. MFA is disabled for this account so the API can be tried without setting up email.
+For the local setup, the default super admin is `superadmin` / `SuperAdmin#2026`. MFA is disabled for this account so the API can be tried without setting up email.
 
 If the browser shows `HTTP Status 400 Bad Request`, open http://127.0.0.1:8080 instead. This happens when the browser sends too many cookies for localhost.
 
 ### Email
 
-OTP codes are sent over SMTP, so fill in the `SMTP_*` and `MAIL_FROM` variables in `.env`. Any SMTP provider works, for example Gmail with an app password or Resend.
-
-To test without email, set `MAIL_DELIVERY_ENABLED=false` and read the code from the logs:
+`.env.example` sets `MAIL_DELIVERY_ENABLED=false`, so OTP codes are written to the app log instead of being emailed:
 
 ```bash
 docker compose logs app | grep "OTP for"
 ```
+
+To send real emails, fill in the `SMTP_*` and `MAIL_FROM` variables in `.env` and set `MAIL_DELIVERY_ENABLED=true`. Any SMTP provider works, for example Gmail with an app password or Resend.
 
 ## Features
 
@@ -117,7 +127,7 @@ All settings come from environment variables. See [.env.example](.env.example).
 
 - A locked account gets a different message than a wrong password, so it is possible to find out that the account exists.
 - Logging in with a username that does not exist responds faster than a wrong password, because no password hash is checked.
-- The rate limiter trusts `X-Forwarded-For`. That is fine behind a reverse proxy, but set `server.forward-headers-strategy: none` if the app is exposed directly.
+- The client IP for rate limiting and audit logs is read from `X-Forwarded-For`. The reverse proxy in front of the app must overwrite that header with the real client IP (the live demo does this in Caddy), and `server.forward-headers-strategy: none` should be set if the app is exposed directly.
 - Only single articles are cached, not article lists.
 - CORS allows all origins.
 
