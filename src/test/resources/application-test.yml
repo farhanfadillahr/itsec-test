@@ -1,0 +1,23 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  mail:
+    host: localhost
+    port: 3025
+
+app:
+  jwt:
+    secret: integration-test-secret-key-that-is-long-enough-for-hs256
+    issuer: https://itsec-test.local
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+  mail:
+    delivery-enabled: false
+  rate-limit:
+    enabled: false
+
+logging:
+  level:
+    com.itsectest: DEBUG
+    org.testcontainers: WARN

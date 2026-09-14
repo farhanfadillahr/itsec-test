@@ -1,0 +1,775 @@
+{
+  "info": {
+    "name": "ITSEC Test API",
+    "description": "Postman collection for the ITSEC Test API.\n\nRun Authentication > Login (seeded super admin) first. The access token is saved to a collection variable and the other requests use it automatically.\n\nIf an account has MFA enabled, Login returns a challengeId instead of tokens. Put the code from the email into Verify MFA code.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "challengeId",
+      "value": ""
+    },
+    {
+      "key": "articleId",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "auditLogId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Creates a new account with the VIEWER role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Farhan Fadillah Rafi\",\n  \"username\": \"farhan\",\n  \"email\": \"farhan@example.com\",\n  \"password\": \"Str0ng#Pass\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Login (seeded super admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "MFA is disabled for this account, so the response contains the tokens directly.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"superadmin\",\n  \"password\": \"SuperAdmin#2026\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.tokens) {",
+                  "    pm.collectionVariables.set('accessToken', body.data.tokens.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.data.tokens.refreshToken);",
+                  "    pm.test('signed in without a second factor', () => pm.response.to.have.status(200));",
+                  "} else if (body.data && body.data.mfa) {",
+                  "    pm.collectionVariables.set('challengeId', body.data.mfa.challengeId);",
+                  "    pm.test('a challenge was issued instead of a token', () =>",
+                  "        pm.expect(body.data.mfaRequired).to.be.true);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (username or email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "identifier accepts a username or an email. Returns a challengeId when MFA is enabled.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"farhan@example.com\",\n  \"password\": \"Str0ng#Pass\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.tokens) {",
+                  "    pm.collectionVariables.set('accessToken', body.data.tokens.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.data.tokens.refreshToken);",
+                  "    pm.test('signed in without a second factor', () => pm.response.to.have.status(200));",
+                  "} else if (body.data && body.data.mfa) {",
+                  "    pm.collectionVariables.set('challengeId', body.data.mfa.challengeId);",
+                  "    pm.test('a challenge was issued instead of a token', () =>",
+                  "        pm.expect(body.data.mfaRequired).to.be.true);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify MFA code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "verify"
+              ]
+            },
+            "description": "Replace code with the 6 digit code from the email.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"code\": \"000000\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.data.refreshToken);",
+                  "}",
+                  "pm.test('tokens issued', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resend MFA code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "resend"
+              ]
+            },
+            "description": "Sends a new code for the same challenge. There is a 60 second cooldown.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Refresh tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "A refresh token can only be used once. The new one is saved automatically.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.data.refreshToken);",
+                  "}",
+                  "pm.test('tokens issued', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Returns the logged in account."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes the access token and the refresh token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Articles",
+      "item": [
+        {
+          "name": "Create article",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/articles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "articles"
+              ]
+            },
+            "description": "Status defaults to DRAFT if it is left out.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Designing a modular monolith\",\n  \"content\": \"Package by feature, not by layer...\",\n  \"status\": \"PUBLISHED\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data) { pm.collectionVariables.set('articleId', body.data.id); }",
+                  "pm.test('article created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List articles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/articles?page=0&size=20&keyword=&status=&authorId=&sortBy=createdAt&direction=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "articles"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "zero-based"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "max 100"
+                },
+                {
+                  "key": "keyword",
+                  "value": "",
+                  "description": "matches title and content"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "DRAFT | PUBLISHED | ARCHIVED"
+                },
+                {
+                  "key": "authorId",
+                  "value": "",
+                  "description": "filter by author"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "createdAt | updatedAt | title | status"
+                },
+                {
+                  "key": "direction",
+                  "value": "desc",
+                  "description": "asc | desc"
+                }
+              ]
+            },
+            "description": "Only returns articles the caller is allowed to see."
+          }
+        },
+        {
+          "name": "Read article",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/articles/{{articleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "articles",
+                "{{articleId}}"
+              ]
+            },
+            "description": "Returns 404 if the caller is not allowed to see the article."
+          }
+        },
+        {
+          "name": "Update article",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/articles/{{articleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "articles",
+                "{{articleId}}"
+              ]
+            },
+            "description": "Super admin can update any article. Other roles can only update their own.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Designing a modular monolith (revised)\",\n  \"content\": \"Updated body.\",\n  \"status\": \"PUBLISHED\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete article",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/articles/{{articleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "articles",
+                "{{articleId}}"
+              ]
+            },
+            "description": "Soft delete. Contributors cannot delete articles."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (super admin)",
+      "item": [
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Set mfaEnabled to false to log in without an OTP.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Editor Example\",\n  \"username\": \"editor1\",\n  \"email\": \"editor1@example.com\",\n  \"password\": \"Str0ng#Pass\",\n  \"role\": \"EDITOR\",\n  \"mfaEnabled\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data) { pm.collectionVariables.set('userId', body.data.id); }",
+                  "pm.test('user created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=0&size=20&keyword=&role=&status=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": ""
+                },
+                {
+                  "key": "keyword",
+                  "value": "",
+                  "description": "matches fullname, username, email"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "SUPER_ADMIN | EDITOR | CONTRIBUTOR | VIEWER"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "ACTIVE | LOCKED | DISABLED"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Read user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "Leave out password to keep the current one. Set status to ACTIVE to unlock an account.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Editor Example\",\n  \"email\": \"editor1@example.com\",\n  \"role\": \"CONTRIBUTOR\",\n  \"status\": \"ACTIVE\",\n  \"mfaEnabled\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "You cannot delete your own account or the last super admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit log (super admin)",
+      "item": [
+        {
+          "name": "Search audit logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs?page=0&size=20&action=&status=&actorUsername=&resourceType=&from=&to=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": ""
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "description": "LOGIN_FAILED, ARTICLE_DELETED, ACCOUNT_LOCKED"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "SUCCESS | FAILURE"
+                },
+                {
+                  "key": "actorUsername",
+                  "value": "",
+                  "description": "partial match"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "",
+                  "description": "ARTICLE | USER | SESSION | ENDPOINT"
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "ISO-8601, for example 2026-09-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "ISO-8601"
+                }
+              ]
+            },
+            "description": "Filter by action, status, actor, resource type or date range."
+          }
+        },
+        {
+          "name": "Read audit log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs/{{auditLogId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit-logs",
+                "{{auditLogId}}"
+              ]
+            },
+            "description": "Set auditLogId from a search result."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Operations",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/actuator/health",
+              "host": [
+                "localhost"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ],
+              "protocol": "http",
+              "port": "8080"
+            },
+            "description": "Checks the database and Redis.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
