@@ -17,7 +17,9 @@ def reverse_words_two_pointer(s: str) -> str:
 
 
 # Number 1. Section B
-## Solution 1: Hash Map 
+## Solution 1: Hash Map
+# Time O(n): one pass over nums, each dict lookup and insert is O(1) on average.
+# Space O(n): the dict can hold up to n numbers.
 def two_sum_hash_map(nums: list[int], target: int) -> tuple[int, int] | None:
     seen: dict[int, int] = {}
     for i, num in enumerate(nums):
@@ -27,7 +29,9 @@ def two_sum_hash_map(nums: list[int], target: int) -> tuple[int, int] | None:
         seen[num] = i
     return None
 
-## Solution 2: Two Pointer 
+## Solution 2: Two Pointer
+# Time O(n log n): sorting dominates, the two pointer scan itself is O(n).
+# Space O(n): the sorted list keeps every number together with its original index.
 def two_sum_two_pointer(nums: list[int], target: int) -> tuple[int, int] | None:
     pairs = sorted((num, i) for i, num in enumerate(nums))
     left, right = 0, len(pairs) - 1
@@ -46,21 +50,22 @@ def two_sum_two_pointer(nums: list[int], target: int) -> tuple[int, int] | None:
 
 
 # Number 1. Section C
-def fizzbuzz(n: int) -> list[str]:
-    result: list[str] = []
+def fizzbuzz(n: int) -> None:
     for i in range(1, n + 1):
         if i % 15 == 0:
-            result.append("FizzBuzz")
+            print("FizzBuzz")
         elif i % 3 == 0:
-            result.append("Fizz")
+            print("Fizz")
         elif i % 5 == 0:
-            result.append("Buzz")
+            print("Buzz")
         else:
-            result.append(str(i))
-    return result
+            print(i)
 
 
 if __name__ == "__main__":
+    import io
+    from contextlib import redirect_stdout
+
     cases_a = [
         ("This is an example!", "sihT si na !elpmaxe"),
         ("  double  spaces  ", "  elbuod  secaps  "),
@@ -86,11 +91,18 @@ if __name__ == "__main__":
         assert two_sum_hash_map(nums, target) == expected, nums
         assert two_sum_two_pointer(nums, target) == expected, nums
 
-    assert fizzbuzz(15) == [
+    output = io.StringIO()
+    with redirect_stdout(output):
+        fizzbuzz(15)
+    assert output.getvalue().splitlines() == [
         "1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8",
         "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz",
     ]
-    assert fizzbuzz(0) == []
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        fizzbuzz(0)
+    assert output.getvalue() == ""
 
     print("EXAMPLE OUTPUTS:")
     print("- Number 1. Section A: Reverse Words in a String")
@@ -102,6 +114,5 @@ if __name__ == "__main__":
     print(f"two pointer: nums=[3, 2, 4], target=6 -> {two_sum_two_pointer([3, 2, 4], 6)}")
 
     print("\n- Number 1. Section C: FizzBuzz")
-    print("n=15 ->")
-    for line in fizzbuzz(30):
-        print(line)
+    print("n=30 ->")
+    fizzbuzz(30)
