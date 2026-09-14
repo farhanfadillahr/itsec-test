@@ -6,6 +6,10 @@ import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.itsectest.shared.error.ApiError;
+
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
@@ -27,6 +31,9 @@ public class OpenApiErrorResponses {
     @Bean
     public OpenApiCustomizer standardErrorResponses() {
         return openApi -> {
+            ModelConverters.getInstance(true).readAll(new AnnotatedType(ApiError.class))
+                    .forEach((name, schema) -> openApi.getComponents().addSchemas(name, schema));
+
             Content content = new Content().addMediaType("application/json",
                     new MediaType().schema(new Schema<>().$ref("#/components/schemas/ApiError")));
 

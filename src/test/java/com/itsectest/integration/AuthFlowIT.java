@@ -181,6 +181,16 @@ class AuthFlowIT {
     }
 
     @Test
+    void errorResponsesReferenceASchemaThatExists() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/articles'].get.responses['401'].content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/ApiError"))
+                .andExpect(jsonPath("$.components.schemas.ApiError.properties.code").exists())
+                .andExpect(jsonPath("$.components.schemas.FieldViolation.properties.field").exists());
+    }
+
+    @Test
     void healthEndpointIsDocumentedAsPublic() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
